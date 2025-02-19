@@ -22,8 +22,8 @@ Before setting up the application, ensure you have:
 ## 📥 Installation
 ### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/your-repository/flask-slack-commands.git
-cd flask-slack-commands
+git clone https://github.com/your-repository/slack-commands-handler.git
+cd slack-commands-handler
 ```
 
 ### 2️⃣ Create a Virtual Environment
@@ -79,7 +79,7 @@ To ensure the Flask app runs as a background service, create a systemd service f
 
 ### 1️⃣ Create the Service File
 ```bash
-sudo nano /etc/systemd/system/flask_slack_commands.service
+sudo nano /etc/systemd/system/slack-commands-handler.service
 ```
 
 ### 2️⃣ Add the Following Content
