@@ -4,6 +4,7 @@ import logging  # Import logging for recording application logs
 import os  # Import os for environment variable handling and system file access
 import psutil  # Import psutil for system stats like CPU, memory, and power
 import time  # Import time to calculate system uptime
+import requests  # Requests module to make HTTP requests
 from dotenv import load_dotenv  # Import dotenv to load environment variables from .env file
 
 # Load environment variables from .env file
