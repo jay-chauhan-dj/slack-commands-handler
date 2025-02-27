@@ -9,6 +9,8 @@ from dotenv import load_dotenv  # Import dotenv to load environment variables fr
 # Load environment variables from .env file
 load_dotenv()
 SECRET_TOKEN = os.getenv("SECRET_TOKEN")  # Retrieve secret token from environment variables
+FETCH_EMAIL_API_URL = os.getenv("FETCH_EMAIL_API_URL")  # Retrieve fetching email api endpint from environment variables
+FETCH_EMAIL_API_TOKEN = os.getenv("FETCH_EMAIL_API_TOKEN")  # Retrieve secret token from environment variables
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -86,6 +88,14 @@ def home():
         logging.info("Received a POST request at /")
         logging.info(f"Headers: {request.headers}")
         logging.info(f"Body: {request.get_data(as_text=True)}")
+
+    token = request.form.get("token")  # Retrieve token from request
+    if not token or token != SECRET_TOKEN:  # Validate token
+        logging.warning("Unauthorized request received!")
+        return jsonify({
+            "response_type": "ephemeral",
+            "blocks": [{"type": "divider"},{"type": "section", "text": {"type": "mrkdwn", "text": "🚫 *Unauthorized request!*"}},{"type": "divider"}]
+        }), 200
     
     system_info = get_system_info()
     return jsonify(slack_block_response(system_info)), 200  # Respond with formatted Slack message
@@ -109,15 +119,44 @@ def reboot_system():
             logging.warning("Unauthorized request received!")
             return jsonify({
                 "response_type": "ephemeral",
-                "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": "🚫 *Unauthorized request!*"}}]
-            }), 403
+                "blocks": [{"type": "divider"},{"type": "section", "text": {"type": "mrkdwn", "text": "🚫 *Unauthorized request!*"}},{"type": "divider"}]
+            }), 200
         
-        subprocess.run(["sudo", "/sbin/reboot"], check=True)  # Execute system reboot
+        # subprocess.run(["sudo", "/sbin/reboot"], check=True)  # Execute system reboot
         return jsonify({"response_type": "ephemeral","blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": "🔄 *Reboot command executed!*"}}]}), 200
     
     except subprocess.CalledProcessError as e:
         logging.error(f"Error executing reboot command: {str(e)}")
         return jsonify({"response_type": "ephemeral","blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": f"❌ *Error executing reboot:* `{str(e)}`"}}]}), 500
+
+@app.route("/command/fetch/emails", methods=["POST"])
+def fetch_emails():
+    """
+    Endpoint to make a POST request to an external email API with custom headers.
+    
+    Returns:
+        JSON: The response from the external API or an error message.
+    """
+    try:
+        logging.info("Received a request at /command/fetch/emails")  # Log the request
+        
+        # Define the external API URL
+        email_api_url = FETCH_EMAIL_API_URL  # Placeholder URL, replace with actual API
+        
+        # Define the headers for the request
+        headers = {
+            "Authorization": f"Bearer {FETCH_EMAIL_API_TOKEN}",  # Add authentication token in the headers
+            "Content-Type": "application/json"  # Set request content type to JSON
+        }
+        
+        # Make the POST request
+        response = requests.post(email_api_url, headers=headers)  # Send a request to the external email API
+        response_data = response.json()  # Parse response data from JSON
+        
+        return jsonify(response_data), response.status_code  # Return the response and status code
+    except Exception as e:
+        logging.error(f"Error fetching emails: {str(e)}")  # Log error details
+        return jsonify({"error": "Failed to fetch emails"}), 500  # Return an error message in case of failure
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)  # Start Flask app on port 5000, accessible from any IP
